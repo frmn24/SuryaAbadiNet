@@ -13,8 +13,21 @@ pipeline {
                 script {
                     docker.image('composer:2.6').inside('-u root') {
                         sh '''
+                            cp .env.example .env || true
                             rm -f composer.lock
                             composer install --no-interaction --prefer-dist
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Set APP_KEY') {
+            steps {
+                script {
+                    docker.image('php:8.2-cli').inside('-u root') {
+                        sh '''
+                            php artisan key:generate
                         '''
                     }
                 }
