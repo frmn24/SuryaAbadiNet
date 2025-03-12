@@ -1,6 +1,15 @@
 pipeline {
     agent any
 
+    environment {
+        DB_CONNECTION = 'mysql'
+        DB_HOST = '127.0.0.1'
+        DB_PORT = '3306'
+        DB_DATABASE = 'laravel'
+        DB_USERNAME = 'root'
+        DB_PASSWORD = 'root'
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -34,6 +43,18 @@ pipeline {
             }
         }
 
+        stage('Database Migration') {
+            steps {
+                script {
+                    docker.image('php:8.2-cli').inside('-u root') {
+                        sh '''
+                            php artisan migrate --force
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Test') {
             steps {
                 script {
@@ -47,11 +68,24 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    docker.image('ubuntu').inside('-u root') {
-                        sh 'echo "Deploying Laravel Application"'
+                    docker.image('php:8.2-fpm').inside('-u root') {
+                        sh '''
+                            php artisan config:cache
+                            php artisan route:cache
+                            php artisan migrate --force
+                        '''
                     }
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Build and Deployment Successful!'
+        }
+        failure {
+            echo '❌ Build or Deployment Failed!'
         }
     }
 }
