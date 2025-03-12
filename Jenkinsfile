@@ -11,9 +11,11 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    docker.image('php:8.2-cli').inside('-u root') {
-                        sh 'rm -f composer.lock'
-                        sh 'composer install --no-interaction --prefer-dist'
+                    docker.image('composer:2.6').inside('-u root') {
+                        sh '''
+                            rm -f composer.lock
+                            composer install --no-interaction --prefer-dist
+                        '''
                     }
                 }
             }
